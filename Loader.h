@@ -17,6 +17,8 @@ public:
 
 private:
 	explicit Loader(const std::function<void(int, const void*, unsigned)>& callback);
+	Loader& operator=(const Loader&) = delete;
+	Loader(const Loader&) = delete;
 
 	class Impl;
 	Impl* impl_;
