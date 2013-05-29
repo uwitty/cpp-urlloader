@@ -16,11 +16,10 @@ public:
 	~Loader();
 
 private:
-	Loader();
-	static void run(std::shared_ptr<Loader> loader, std::function<void(int, const void*, unsigned)> callback, const std::string& url);
+	explicit Loader(const std::function<void(int, const void*, unsigned)>& callback);
 
-	std::shared_future<void> finished_;
-	std::promise<bool> canceled_;
+	class Impl;
+	Impl* impl_;
 };
 
 #endif
