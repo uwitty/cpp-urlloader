@@ -21,7 +21,7 @@ private:
 	Loader(const Loader&) = delete;
 
 	class Impl;
-	Impl* impl_;
+	std::unique_ptr<Impl> impl_;
 };
 
 #endif
