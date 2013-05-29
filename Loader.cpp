@@ -10,22 +10,6 @@
 
 using namespace std;
 
-static size_t write_data(void* buffer, size_t size, size_t nmemb, void* userp)
-{
-	auto& t = *((tuple<future<bool>&, vector<uint8_t>&, bool&>*)userp);
-	future<bool>& canceled = get<0>(t);
-	if (canceled.wait_for(chrono::seconds(0)) == future_status::ready) {
-		printf("%s() canceled. \n", __func__);
-		get<2>(t) = true;
-		return 0;
-	}
-
-	vector<uint8_t>& data = get<1>(t);
-	data.insert(data.end(), (uint8_t*)buffer, (uint8_t*)buffer + size*nmemb);
-
-	return size*nmemb;
-}
-
 class Loader::Impl
 {
 public:
@@ -65,6 +49,22 @@ public:
 				}
 			}
 			, loader->impl_->canceled_.get_future());
+	}
+
+	static size_t write_data(void* buffer, size_t size, size_t nmemb, void* userp)
+	{
+		auto& t = *((tuple<future<bool>&, vector<uint8_t>&, bool&>*)userp);
+		future<bool>& canceled = get<0>(t);
+		if (canceled.wait_for(chrono::seconds(0)) == future_status::ready) {
+			printf("%s() canceled. \n", __func__);
+			get<2>(t) = true;
+			return 0;
+		}
+
+		vector<uint8_t>& data = get<1>(t);
+		data.insert(data.end(), static_cast<uint8_t*>(buffer), static_cast<uint8_t*>(buffer) + size*nmemb);
+
+		return size*nmemb;
 	}
 
 	std::shared_future<void> finished_;
