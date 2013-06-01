@@ -13,7 +13,7 @@ using namespace std;
 class Loader::Impl
 {
 public:
-	explicit Impl(const std::function<void(int, const void* buf, unsigned size)>& callback) : callback_(callback)
+	explicit Impl(const loader_callback& callback) : callback_(callback)
 	{
 	}
 
@@ -33,7 +33,7 @@ public:
 				curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, write_data);
 				curl_easy_setopt(handle, CURLOPT_WRITEDATA, &t);
 
-				int result = curl_easy_perform(handle);
+				int retcode = curl_easy_perform(handle);
 				curl_easy_cleanup(handle);
 
 				if (get<2>(t)) {
@@ -43,7 +43,11 @@ public:
 
 				auto p = wptr.lock();
 				if (p) {
-					p->impl_->callback_(result, &data[0], data.size());
+					if (retcode == 0) {
+						p->impl_->callback_(loader_result::succeeded, &data[0], data.size());
+					} else {
+						p->impl_->callback_(loader_result::failed, NULL, 0);
+					}
 				} else {
 					printf("listener object is null. \n");
 				}
@@ -69,10 +73,10 @@ public:
 
 	std::shared_future<void> finished_;
 	std::promise<bool> canceled_;
-	std::function<void(int, const void* buf, unsigned size)> callback_;
+	Loader::loader_callback callback_;
 };
 
-std::shared_ptr<Loader> Loader::load(const std::string& url, std::function<void(int, const void* buf, unsigned size)> callback)
+std::shared_ptr<Loader> Loader::load(const std::string& url, const loader_callback& callback)
 {
 	shared_ptr<Loader> p(new Loader(callback));
 	Loader::Impl::run(p, url);
@@ -92,13 +96,12 @@ void Loader::cancel()
 	}
 }
 
-Loader::Loader(const std::function<void(int, const void* buf, unsigned size)>& callback) : impl_(new Impl(callback))
+Loader::Loader(const loader_callback& callback) : impl_(new Impl(callback))
 {
 }
 
 Loader::~Loader()
 {
 	cancel();
-	delete impl_;
 }
 

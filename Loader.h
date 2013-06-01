@@ -9,14 +9,20 @@
 class Loader
 {
 public:
-	static std::shared_ptr<Loader> load(const std::string& url, std::function<void(int, const void*, unsigned)> callback);
+	enum class loader_result {
+		succeeded,
+		failed,
+	};
+	typedef std::function<void(loader_result, const void*, unsigned)> loader_callback;
+
+	static std::shared_ptr<Loader> load(const std::string& url, const loader_callback& callback);
 	void wait() const;
 	void cancel();
 
 	~Loader();
 
 private:
-	explicit Loader(const std::function<void(int, const void*, unsigned)>& callback);
+	explicit Loader(const loader_callback& callback);
 	Loader& operator=(const Loader&) = delete;
 	Loader(const Loader&) = delete;
 
