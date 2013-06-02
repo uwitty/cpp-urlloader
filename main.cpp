@@ -6,12 +6,13 @@ using namespace std;
 
 shared_ptr<Loader> load_and_print(const string& url)
 {
-	return Loader::load(url, [](int result, const void* buf, unsigned size) {
-		printf("callback -> {result:%d, buf:%p, size:%d}\n", result, buf, (int)size);
+	return Loader::load(url, [](Loader::loader_result res, const void* buf, unsigned size) {
+		const char* s = (res == Loader::loader_result::succeeded)? "succeeded" : "ng";
+		printf("callback -> {result:%s, buf:%p, size:%d}\n", s, buf, (int)size);
 
-		string s = string((const char*)buf, size);
+		string response = string((const char*)buf, size);
 		printf("--------------------------------------\n");
-		printf("%s\n", s.c_str());
+		printf("%s\n", response.c_str());
 		printf("--------------------------------------\n");
 	});
 }
